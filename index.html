@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Restaurante Digital - Mesero</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <h1>El Restaurante Digital 🍽️</h1>
+        <h2>Toma de Orden</h2>
+    </header>
+
+    <main>
+        <section id="menu-section">
+            <h3>Menú Disponible</h3>
+            <table id="menu-table">
+                <thead>
+                    <tr>
+                        <th>Producto</th>
+                        <th>Precio</th>
+                        <th>Cantidad</th>
+                    </tr>
+                </thead>
+                <tbody id="menu-body">
+                    </tbody>
+            </table>
+        </section>
+
+        <section id="order-summary">
+            <h3>Orden Actual</h3>
+            <p>Subtotal: <span id="subtotal">$0.00</span></p>
+            <button onclick="enviarOrden()">ENVIAR ORDEN A LA COCINA</button>
+        </section>
+
+        <section id="order-status">
+            <h3>Estado de la Orden</h3>
+            <div id="estado-orden">Esperando orden...</div>
+        </section>
+    </main>
+    
+    <script src="app.js"></script>
+</body>
+</html>
