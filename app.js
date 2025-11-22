@@ -6,7 +6,7 @@ const MENU = [
     { id: 'AGUA', nombre: 'Agua Embotellada', precio: 2.50 }
 ];
 
-const API_URL = 'http://127.0.0.1:5000/api/ordenes';
+const API_URL = 'https://restaurantedigital-production.up.railway.app/api/ordenes';
 
 // Función para generar dinámicamente el menú en la tabla HTML
 function generarMenu() {
