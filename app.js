@@ -1,106 +1,149 @@
-// Menú Local (para mostrar nombres y calcular subtotal)
+// Agregamos categorías e íconos para mejor visualización
 const MENU = [
-    { id: 'HAMBUR', nombre: 'Hamburguesa Deluxe', precio: 10.00 },
-    { id: 'PAPAS', nombre: 'Papas Fritas', precio: 5.00 },
-    { id: 'REFRESCO', nombre: 'Refresco Cola', precio: 3.00 },
-    { id: 'AGUA', nombre: 'Agua Embotellada', precio: 2.50 }
+    { id: 'HAMBUR', nombre: 'Hamburguesa Deluxe', precio: 10.00, cat: 'comida', icon: '🍔' },
+    { id: 'PIZZA', nombre: 'Pizza Margarita', precio: 15.00, cat: 'comida', icon: '🍕' },
+    { id: 'ENSALADA', nombre: 'Ensalada César', precio: 8.50, cat: 'comida', icon: '🥗' },
+    { id: 'PAPAS', nombre: 'Papas Fritas', precio: 5.00, cat: 'comida', icon: '🍟' },
+    { id: 'REFRESCO', nombre: 'Refresco Cola', precio: 3.00, cat: 'bebida', icon: '🥤' },
+    { id: 'AGUA', nombre: 'Agua Embotellada', precio: 2.50, cat: 'bebida', icon: '💧' },
+    { id: 'CERVEZA', nombre: 'Cerveza Artesanal', precio: 6.00, cat: 'bebida', icon: '🍺' },
+    { id: 'POSTRE_CHOCO', nombre: 'Pastel de Chocolate', precio: 4.00, cat: 'postre', icon: '🍰' }
 ];
 
-const API_URL = 'https://restaurantedigital-production.up.railway.app/api/ordenes';
+const API_URL = 'https://restaurantedigital-production.up.railway.app/api/ordenes'; // O tu localhost
 
-// Función para generar dinámicamente el menú en la tabla HTML
-function generarMenu() {
-    const menuBody = document.getElementById('menu-body');
+// Objeto para guardar el estado de cantidades (ID -> Cantidad)
+let ordenActual = {};
+
+// Inicializar
+window.onload = () => {
+    filtrarMenu(); // Genera el menú inicial
+    document.getElementById('mesa-select').addEventListener('change', () => mostrarEstado('Mesa seleccionada.'));
+};
+
+// Función para filtrar y redibujar el menú
+function filtrarMenu() {
+    const filtro = document.getElementById('categoria-filter').value;
+    const grid = document.getElementById('menu-grid');
+    grid.innerHTML = ''; // Limpiar
+
     MENU.forEach(item => {
-        const row = menuBody.insertRow();
-        row.innerHTML = `
-            <td>${item.nombre}</td>
-            <td>$${item.precio.toFixed(2)}</td>
-            <td><input type="number" data-id="${item.id}" value="0" min="0" onchange="calcularSubtotal()"></td>
-        `;
+        // Lógica de filtro: Si es "todos" o coincide la categoría
+        if (filtro === 'todos' || item.cat === filtro) {
+            crearTarjeta(item, grid);
+        }
     });
 }
 
-// 1. Cálculo Parcial (Subtotal)
-function calcularSubtotal() {
+// Crea el HTML de una tarjeta individual
+function crearTarjeta(item, contenedor) {
+    const qty = ordenActual[item.id] || 0; // Recuperar cantidad si ya existía
+    
+    const card = document.createElement('div');
+    card.className = 'menu-card';
+    card.innerHTML = `
+        <div class="card-header">
+            <span class="card-emoji">${item.icon}</span>
+            <h3>${item.nombre}</h3>
+            <div class="card-price">$${item.precio.toFixed(2)}</div>
+        </div>
+        <div class="quantity-control">
+            <button class="btn-qty" onclick="cambiarCantidad('${item.id}', -1)">-</button>
+            <span class="qty-display" id="qty-${item.id}">${qty}</span>
+            <button class="btn-qty" onclick="cambiarCantidad('${item.id}', 1)">+</button>
+        </div>
+    `;
+    contenedor.appendChild(card);
+}
+
+// Maneja los botones + y -
+function cambiarCantidad(id, delta) {
+    if (!ordenActual[id]) ordenActual[id] = 0;
+    
+    let nuevaCant = ordenActual[id] + delta;
+    if (nuevaCant < 0) nuevaCant = 0; // No permitir negativos
+    
+    ordenActual[id] = nuevaCant;
+    
+    // Actualizar visualmente solo el número
+    const display = document.getElementById(`qty-${id}`);
+    if(display) display.textContent = nuevaCant; // Chequeo por si el filtro lo ocultó
+
+    calcularResumen();
+}
+
+// Calcular Totales
+function calcularResumen() {
     let subtotal = 0;
-    const inputs = document.querySelectorAll('#menu-body input[type="number"]');
+    let itemsCount = 0;
     
-    inputs.forEach(input => {
-        const itemId = input.getAttribute('data-id');
-        const qty = parseInt(input.value);
-        const menuItem = MENU.find(m => m.id === itemId);
-        
-        if (qty > 0 && menuItem) {
-            subtotal += menuItem.precio * qty;
-        }
-    });
-    
-    document.getElementById('subtotal').textContent = `$${subtotal.toFixed(2)}`;
-}
-
-// Función auxiliar para mostrar el estado en la interfaz
-function mostrarEstado(mensaje) {
-    document.getElementById('estado-orden').textContent = mensaje;
-}
-
-// 2. Envío de Orden (La Conexión)
-async function enviarOrden() {
-    // 1. Recopilar la orden actual
-    const items = [];
-    const inputs = document.querySelectorAll('#menu-body input[type="number"]');
-    
-    inputs.forEach(input => {
-        const itemId = input.getAttribute('data-id');
-        const qty = parseInt(input.value);
+    MENU.forEach(item => {
+        const qty = ordenActual[item.id] || 0;
         if (qty > 0) {
-            items.push({ id: itemId, qty: qty });
+            subtotal += item.precio * qty;
+            itemsCount += qty;
         }
     });
+    
+    // Actualizar barra inferior
+    document.getElementById('subtotal').textContent = `$${subtotal.toFixed(2)}`;
+    document.getElementById('items-count').textContent = `${itemsCount} ítems`;
+    
+    // Pequeña animación visual en el precio
+    const precioLabel = document.getElementById('subtotal');
+    precioLabel.style.transform = "scale(1.1)";
+    setTimeout(() => precioLabel.style.transform = "scale(1)", 200);
+}
 
-    if (items.length === 0) {
-        mostrarEstado("❌ Por favor, selecciona al menos un ítem.");
+function mostrarEstado(msg) {
+    document.getElementById('estado-orden').innerHTML = msg;
+}
+
+// Envío de Orden (Modificado para usar el objeto ordenActual)
+async function enviarOrden() {
+    const mesa = document.getElementById('mesa-select').value;
+    
+    if (mesa === "") {
+        alert("⚠️ ¡Selecciona una mesa primero!");
         return;
     }
 
-    const ordenParaEnviar = {
-        mesa: 1, // Mesa fija para la prueba
-        items: items
-    };
+    // Convertir nuestro mapa de ordenActual al formato que pide el Backend (array de objetos)
+    const items = [];
+    for (const [id, qty] of Object.entries(ordenActual)) {
+        if (qty > 0) {
+            items.push({ id: id, qty: qty });
+        }
+    }
 
-    mostrarEstado("⏳ Enviando orden a la Cocina...");
+    if (items.length === 0) {
+        alert("⚠️ La orden está vacía.");
+        return;
+    }
 
-    // 2. Petición POST al servidor Flask
+    const ordenParaEnviar = { mesa: mesa, items: items };
+    mostrarEstado("⏳ Enviando...");
+
     try {
         const response = await fetch(API_URL, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(ordenParaEnviar)
         });
 
         const data = await response.json();
 
-        // 3. Manejar la respuesta
-        if (response.ok) { // 2xx status (201 Created)
-            mostrarEstado(`✅ Éxito: ${data.message}`);
-            // Limpiar las cantidades en la interfaz
-            inputs.forEach(input => input.value = 0);
-            calcularSubtotal();
-        } else { // 4xx o 5xx status (Error)
-            mostrarEstado(`❌ Error del servidor: ${data.message}`);
+        if (response.ok) {
+            mostrarEstado(`✅ ¡Enviado a Cocina! (Orden #${data.order_id})`);
+            // Resetear
+            ordenActual = {};
+            filtrarMenu(); // Redibuja con ceros
+            calcularResumen();
+        } else {
+            mostrarEstado(`❌ Error: ${data.message}`);
         }
-        
     } catch (error) {
-        // Error de red (el servidor no está corriendo)
-        mostrarEstado(`🔴 ERROR de conexión. Asegúrate que 'app.py' esté corriendo.`);
-        console.error("Error al conectar:", error);
+        mostrarEstado("🔴 Error de conexión");
+        console.error(error);
     }
 }
-
-// Inicializa el menú cuando la página carga
-window.onload = () => {
-    generarMenu();
-    calcularSubtotal(); // Inicializa el subtotal en 0.00
-};

@@ -2,42 +2,59 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Restaurante Digital - Mesero</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gourmet POS 🍽️</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <header>
-        <h1>El Restaurante Digital 🍽️</h1>
-        <h2>Toma de Orden</h2>
+
+    <header class="app-header">
+        <div class="brand">
+            <h1>Gourmet POS</h1>
+            <span class="badge">Mesero</span>
+        </div>
+        
+        <div class="controls">
+            <div class="control-group">
+                <label>Mesa:</label>
+                <select id="mesa-select" class="modern-select">
+                    <option value="">Seleccionar...</option>
+                    <option value="1">Mesa 1 (Ventana)</option>
+                    <option value="2">Mesa 2 (Centro)</option>
+                    <option value="3">Mesa 3 (Pasillo)</option>
+                    <option value="4">Mesa 4 (Terraza)</option>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <label>Ver:</label>
+                <select id="categoria-filter" class="modern-select" onchange="filtrarMenu()">
+                    <option value="todos">Todo el Menú</option>
+                    <option value="comida">🍔 Platos Fuertes</option>
+                    <option value="bebida">🥤 Bebidas</option>
+                    <option value="postre">🍰 Postres</option>
+                </select>
+            </div>
+        </div>
     </header>
 
     <main>
-        <section id="menu-section">
-            <h3>Menú Disponible</h3>
-            <table id="menu-table">
-                <thead>
-                    <tr>
-                        <th>Producto</th>
-                        <th>Precio</th>
-                        <th>Cantidad</th>
-                    </tr>
-                </thead>
-                <tbody id="menu-body">
-                    </tbody>
-            </table>
-        </section>
-
-        <section id="order-summary">
-            <h3>Orden Actual</h3>
-            <p>Subtotal: <span id="subtotal">$0.00</span></p>
-            <button onclick="enviarOrden()">ENVIAR ORDEN A LA COCINA</button>
-        </section>
-
-        <section id="order-status">
-            <h3>Estado de la Orden</h3>
-            <div id="estado-orden">Esperando orden...</div>
-        </section>
+        <section id="menu-grid" class="menu-grid">
+            </section>
     </main>
+
+    <footer class="order-summary-bar" id="summary-bar">
+        <div class="summary-info">
+            <span id="items-count">0 ítems</span>
+            <span class="divider">|</span>
+            <span id="subtotal" class="total-price">$0.00</span>
+        </div>
+        <div id="estado-orden" class="status-text">Listo para ordenar</div>
+        <button onclick="enviarOrden()" class="btn-send">
+            Confirmar Orden 🚀
+        </button>
+    </footer>
     
     <script src="app.js"></script>
 </body>

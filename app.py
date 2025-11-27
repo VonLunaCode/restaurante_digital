@@ -1,16 +1,21 @@
 from flask import Flask, request, jsonify
-# IMPORTA LA NUEVA LIBRERÍA
-from flask_cors import CORS 
+from flask_cors import CORS
+# Importar la librería para manejar la hora
+from datetime import datetime
 
 app = Flask(__name__)
-# APLICA CORS A TU APP (Permite la comunicación desde CUALQUIER origen)
 CORS(app)
-# --- Base de Datos del Restaurante (Menú Fijo) ---
+
+# --- Base de Datos del Restaurante (Menú Extendido) ---
 MENU = {
     'HAMBUR': 10.00,
     'PAPAS': 5.00,
     'REFRESCO': 3.00,
-    'AGUA': 2.50
+    'AGUA': 2.50,
+    'PIZZA': 15.00,        # Nuevo ítem
+    'ENSALADA': 8.50,     # Nuevo ítem
+    'POSTRE_CHOCO': 4.00, # Nuevo ítem
+    'CERVEZA': 6.00       # Nuevo ítem
 }
 ordenes_registradas = []
 next_order_id = 1
@@ -23,9 +28,18 @@ def procesar_orden():
     # 1. Recibir los datos JSON
     data = request.get_json() 
 
-    # Validación de datos y estructura
+    # Validación de datos y estructura (incluyendo la mesa)
     if not data or 'mesa' not in data or 'items' not in data or not data['items']:
-        return jsonify({"status": "error", "message": "Estructura de la orden inválida."}), 400
+        return jsonify({"status": "error", "message": "Estructura de la orden inválida (mesa o items faltantes)."}), 400
+
+    # Validar que el número de mesa sea positivo
+    try:
+        mesa = int(data['mesa'])
+        if mesa <= 0:
+            return jsonify({"status": "error", "message": "Número de mesa inválido."}), 400
+    except ValueError:
+         return jsonify({"status": "error", "message": "El número de mesa debe ser un entero."}), 400
+
 
     # 2. Procesador de Órdenes (Lógica de Negocio)
     total_calculado = 0.0
@@ -46,10 +60,10 @@ def procesar_orden():
     # 3. Almacén de Órdenes (Persistencia simple)
     nueva_orden = {
         "order_id": next_order_id,
-        "mesa": data['mesa'],
+        "mesa": mesa, # Usamos la mesa validada
         "items": data['items'],
         "total": round(total_calculado, 2),
-        "hora": next_order_id, # Placeholder para la hora
+        "hora": datetime.now().strftime("%H:%M:%S"), # Hora real de registro
         "estado": "Recibida"
     }
     ordenes_registradas.append(nueva_orden)
@@ -60,9 +74,8 @@ def procesar_orden():
         "status": "ok",
         "order_id": nueva_orden['order_id'],
         "total": nueva_orden['total'],
-        "message": f"Orden #{nueva_orden['order_id']} recibida. Total: ${nueva_orden['total']}."
+        "message": f"Orden #{nueva_orden['order_id']} para Mesa {nueva_orden['mesa']} recibida. Total: ${nueva_orden['total']}."
     }), 201 
 
 if __name__ == '__main__':
-    # '0.0.0.0' hace que Flask sea accesible desde tu IP local (ej. 192.168.1.X)
     app.run(host='0.0.0.0', port=5000, debug=True)
